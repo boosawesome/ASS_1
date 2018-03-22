@@ -1,7 +1,6 @@
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
 
 public class KNN {
     public ArrayList testList = new ArrayList<Flower>();
@@ -20,48 +19,63 @@ public class KNN {
         }
 
         while (scTest != null && scTest.hasNext())
-            testList.add(NewFlower(scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.next()));
+            testList.add(new Flower(scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.next()));
 
         while (scTrain != null && scTrain.hasNext())
-            trainList.add(NewFlower(scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.next()));
+            trainList.add(new Flower(scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.next()));
 
     }
 
-    public double EuclideanDistance(double[] first, double[] second, int length) {
+    public double EuclideanDistance(Flower first, Flower second, int length) {
         double distance = 0;
         for (int i = 0; i < length; i++) {
-            distance += Math.pow((first[i] - second[i]), 2);
+            distance += Math.pow((first.measure[i] - second.measure[i]), 2);
         }
         return Math.sqrt(distance);
     }
 
-    public Flower[] getNeighbours(int k) {
-        double[] distance;
-        double dist = 0;
+    public Flower[] getNeighbours(Flower testInstance, int k) {
+        List<FlowerDouble> distances = new ArrayList<>();
+        double dist;
         int length = testList.size() - 1;
         for (int i = 0; i < trainList.size(); i++){
-
+            dist = EuclideanDistance(testInstance, (Flower) trainList.get(i), length);
+            distances.add(new FlowerDouble((Flower) trainList.get(i), dist));
         }
+        Collections.sort(distances);
         return new Flower[0];
     }
 
-    private Flower NewFlower(double slength, double swidth, double plength, double pwidth, String name) {
-        Flower newFlower = new Flower();
-        newFlower.slength = slength;
-        newFlower.swidth = swidth;
-        newFlower.plength = plength;
-        newFlower.pwidth = pwidth;
-        newFlower.name = name;
-        return newFlower;
-    }
 
     class Flower {
-        double slength;
-        double swidth;
-        double plength;
-        double pwidth;
+        double[] measure;
+
+        {
+            measure = new double[4];
+        }
+
         String name;
+
+        public Flower(double slength, double swidth, double plength, double pwidth, String name){
+            this.measure[0] = slength;
+            this.measure[1] = swidth;
+            this.measure[2] = plength;
+            this.measure[3] = pwidth;
+            this.name = name;
+        }
     }
+
+    class FlowerDouble {
+        Flower flower;
+        double num;
+
+        public FlowerDouble(Flower flower, double num){
+            this.flower = flower;
+            this.num = num;
+        }
+    }
+
+
 
     public static void main(String[] args) {
         KNN start = new KNN();
