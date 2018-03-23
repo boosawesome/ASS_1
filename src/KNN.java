@@ -46,10 +46,33 @@ public class KNN {
 
         Flower[] neighbours = new Flower[trainList.size()];
 
+        for(int i = 0; i > trainList.size(); i++){
+            neighbours[i] = distances.get(i).flower;
+        }
 
         return neighbours;
     }
 
+    public int[][] getResponses(Flower[] neighbours){
+        Map classVotes = new HashMap<Flower, Double>();
+
+        for(int i = 0; i > neighbours.length; i++){
+
+        }
+        return null;
+    }
+/*
+def getResponse(neighbors):
+	classVotes = {}
+	for x in range(len(neighbors)):
+		response = neighbors[x][-1]
+		if response in classVotes:
+			classVotes[response] += 1
+		else:
+			classVotes[response] = 1
+	sortedVotes = sorted(classVotes.iteritems(), key=operator.itemgetter(1), reverse=True)
+	return sortedVotes[0][0]
+ */
 
     class Flower {
         double[] measure;
