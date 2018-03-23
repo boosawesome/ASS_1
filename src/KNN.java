@@ -43,7 +43,11 @@ public class KNN {
             distances.add(new FlowerDouble((Flower) trainList.get(i), dist));
         }
         Collections.sort(distances);
-        return new Flower[0];
+
+        Flower[] neighbours = new Flower[trainList.size()];
+
+
+        return neighbours;
     }
 
 
@@ -76,7 +80,6 @@ public class KNN {
 
         @Override
         public int compareTo(Object o) {
-            int n;
             if(num > (Double) o) return -1;
             else return 1;
         }
