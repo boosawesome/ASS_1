@@ -65,7 +65,7 @@ public class KNN {
         }
     }
 
-    class FlowerDouble {
+    class FlowerDouble implements Comparable{
         Flower flower;
         double num;
 
@@ -73,6 +73,14 @@ public class KNN {
             this.flower = flower;
             this.num = num;
         }
+
+        @Override
+        public int compareTo(Object o) {
+            int n;
+            if(num > (Double) o) return -1;
+            else return 1;
+        }
+
     }
 
 
