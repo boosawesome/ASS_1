@@ -7,7 +7,6 @@ public class KNN {
     public ArrayList trainList = new ArrayList<Flower>();
 
     public ArrayList predictions = new ArrayList<Response>();
-    
 
     public void Knn() {
         File testFile = new File("Data/ass1-data/part1/iris-test.txt");
