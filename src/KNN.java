@@ -25,7 +25,7 @@ public class KNN {
             testList.add(new Flower(scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.next()));
 
         while (scTrain != null && scTrain.hasNext())
-            trainList.add(new Flower(scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.next()));
+            trainList.add(new Flower(scTrain.nextDouble(), scTrain.nextDouble(), scTrain.nextDouble(), scTrain.nextDouble(), scTrain.next()));
 
         int k = 3;
 
@@ -33,25 +33,16 @@ public class KNN {
          Flower[] neighbours = getNeighbours((Flower) testList.get(i), k);
          Response result = getResponses(neighbours);
          predictions.add(result);
-         System.out.println("predicted: " + result.flower + " | actual: " + ((Flower) testList.get(i)).name);
+         System.out.println("predicted: " + result.flower.name + " | actual: " + ((Flower) testList.get(i)).name);
         }
         Float accuracy = getAccuracy(testList, predictions);
         System.out.print("Accuracy: " + accuracy + "%");
     }
-/*
-k = 3
-	for x in range(len(testSet)):
-		neighbors = getNeighbors(trainingSet, testSet[x], k)
-		result = getResponse(neighbors)
-		predictions.append(result)
-		print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][-1]))
-	accuracy = getAccuracy(testSet, predictions)
-	print('Accuracy: ' + repr(accuracy) + '%')
- */
+
 
     public double EuclideanDistance(Flower first, Flower second, int length) {
         double distance = 0;
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < length - 1; i++) {
             distance += Math.pow((first.measure[i] - second.measure[i]), 2);
         }
         return Math.sqrt(distance);
@@ -60,16 +51,16 @@ k = 3
     public Flower[] getNeighbours(Flower testInstance, int k) {
         List<FlowerDouble> distances = new ArrayList<>();
         double dist;
-        int length = testList.size() - 1;
-        for (int i = 0; i < trainList.size(); i++){
-            dist = EuclideanDistance(testInstance, (Flower) trainList.get(i), length);
+
+        for (int i = 0; i < trainList.size() - 1; i++){
+            dist = EuclideanDistance(testInstance, (Flower) trainList.get(i), 3);
             distances.add(new FlowerDouble((Flower) trainList.get(i), dist));
         }
         Collections.sort(distances);
 
         Flower[] neighbours = new Flower[trainList.size()];
 
-        for(int i = 0; i < trainList.size(); i++){
+        for(int i = 0; i < trainList.size() - 1; i++){
             neighbours[i] = distances.get(i).flower;
         }
 
@@ -79,7 +70,7 @@ k = 3
     public Response getResponses(Flower[] neighbours){
         Set classVotes = new HashSet<Response>();
         Response[] responses = new Response[neighbours.length + 1];
-        for(int i = 0; i < neighbours.length; i++){
+        for(int i = 0; i < neighbours.length - 1; i++){
             responses[i] = new Response(neighbours[i], -1);
             if(classVotes.contains(responses[i])){
                 Response temp = responses[i];
@@ -98,8 +89,12 @@ k = 3
 
     public float getAccuracy(ArrayList testList, ArrayList predictions){
         float correct = 0;
-        for(int i = 0; i < testList.size(); i++){
-            if (testList.get(i) == predictions.get(i)){
+        for(int i = 0; i < testList.size() - 1; i++){
+            Flower test = (Flower) testList.get(i);
+            String testName = test.name;
+            Response predict = (Response) predictions.get(i);
+            String predictName = predict.flower.name;
+            if (testName.equals(predictName)){
                 correct += 1;
             }
         }
@@ -124,7 +119,7 @@ k = 3
         }
     }
 
-    class FlowerDouble implements Comparable{
+    class FlowerDouble implements Comparable<FlowerDouble>{
         Flower flower;
         double num;
 
@@ -134,14 +129,14 @@ k = 3
         }
 
         @Override
-        public int compareTo(Object o) {
-            if(num > (Double) o) return -1;
+        public int compareTo(FlowerDouble o) {
+            if(num >  o.num) return -1;
             else return 1;
         }
 
     }
 
-    class Response implements Comparable{
+    class Response implements Comparable<Response>{
         Flower flower;
         int num;
 
@@ -151,8 +146,8 @@ k = 3
         }
 
         @Override
-        public int compareTo(Object o) {
-            if (num > (Integer) o) return 1;
+        public int compareTo(Response o) {
+            if (num > o.num) return 1;
             else return -1;
         }
     }
