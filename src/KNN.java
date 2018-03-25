@@ -58,9 +58,9 @@ public class KNN {
         }
         Collections.sort(distances);
 
-        Flower[] neighbours = new Flower[trainList.size()];
+        Flower[] neighbours = new Flower[k];
 
-        for(int i = 0; i < trainList.size() - 1; i++){
+        for(int i = 0; i < k; i++){
             neighbours[i] = distances.get(i).flower;
         }
 
