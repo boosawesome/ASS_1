@@ -6,11 +6,15 @@ public class KNN {
     public ArrayList testList = new ArrayList<Flower>();
     public ArrayList trainList = new ArrayList<Flower>();
 
+    public ArrayList predictions = new ArrayList<Response>();
+    
+
     public void Knn() {
-        File testFile = new File("iris-test.txt");
-        File trainingFile = new File("iris-training.txt");
+        File testFile = new File("Data/ass1-data/part1/iris-test.txt");
+        File trainingFile = new File("Data/ass1-data/part1/iris-training.txt");
         Scanner scTest = null;
         Scanner scTrain = null;
+
         try {
             scTest = new Scanner(testFile);
             scTrain = new Scanner(trainingFile);
@@ -24,7 +28,27 @@ public class KNN {
         while (scTrain != null && scTrain.hasNext())
             trainList.add(new Flower(scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.next()));
 
+        int k = 3;
+
+        for (int i = 0; i < testList.size(); i++){
+         Flower[] neighbours = getNeighbours((Flower) testList.get(i), k);
+         Response result = getResponses(neighbours);
+         predictions.add(result);
+         System.out.println("predicted: " + result.flower + " | actual: " + ((Flower) testList.get(i)).name);
+        }
+        Float accuracy = getAccuracy(testList, predictions);
+        System.out.print("Accuracy: " + accuracy + "%");
     }
+/*
+k = 3
+	for x in range(len(testSet)):
+		neighbors = getNeighbors(trainingSet, testSet[x], k)
+		result = getResponse(neighbors)
+		predictions.append(result)
+		print('> predicted=' + repr(result) + ', actual=' + repr(testSet[x][-1]))
+	accuracy = getAccuracy(testSet, predictions)
+	print('Accuracy: ' + repr(accuracy) + '%')
+ */
 
     public double EuclideanDistance(Flower first, Flower second, int length) {
         double distance = 0;
