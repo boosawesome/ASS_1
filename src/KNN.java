@@ -46,33 +46,42 @@ public class KNN {
 
         Flower[] neighbours = new Flower[trainList.size()];
 
-        for(int i = 0; i > trainList.size(); i++){
+        for(int i = 0; i < trainList.size(); i++){
             neighbours[i] = distances.get(i).flower;
         }
 
         return neighbours;
     }
 
-    public int[][] getResponses(Flower[] neighbours){
-        Map classVotes = new HashMap<Flower, Double>();
-
-        for(int i = 0; i > neighbours.length; i++){
-
+    public Response getResponses(Flower[] neighbours){
+        Set classVotes = new HashSet<Response>();
+        Response[] responses = new Response[neighbours.length + 1];
+        for(int i = 0; i < neighbours.length; i++){
+            responses[i] = new Response(neighbours[i], -1);
+            if(classVotes.contains(responses[i])){
+                Response temp = responses[i];
+                temp.num += 1;
+                classVotes.remove(responses[i]);
+                classVotes.add(temp);
+            }
+            else {
+                classVotes.add(responses[i]);
+            }
         }
-        return null;
+        List list = new ArrayList(classVotes);
+        Collections.sort(list);
+        return (Response) list.get(0);
     }
-/*
-def getResponse(neighbors):
-	classVotes = {}
-	for x in range(len(neighbors)):
-		response = neighbors[x][-1]
-		if response in classVotes:
-			classVotes[response] += 1
-		else:
-			classVotes[response] = 1
-	sortedVotes = sorted(classVotes.iteritems(), key=operator.itemgetter(1), reverse=True)
-	return sortedVotes[0][0]
- */
+
+    public float getAccuracy(ArrayList testList, ArrayList predictions){
+        float correct = 0;
+        for(int i = 0; i < testList.size(); i++){
+            if (testList.get(i) == predictions.get(i)){
+                correct += 1;
+            }
+        }
+        return (correct/(float)testList.size()) * (float) 100.0;
+    }
 
     class Flower {
         double[] measure;
@@ -107,6 +116,22 @@ def getResponse(neighbors):
             else return 1;
         }
 
+    }
+
+    class Response implements Comparable{
+        Flower flower;
+        int num;
+
+        public Response(Flower flower, int num){
+            this.flower = flower;
+            this.num = num;
+        }
+
+        @Override
+        public int compareTo(Object o) {
+            if (num > (Integer) o) return 1;
+            else return -1;
+        }
     }
 
 
