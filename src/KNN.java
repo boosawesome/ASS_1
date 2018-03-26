@@ -2,15 +2,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+/*
+"Data/ass1-data/part1/iris-test.txt"
+"Data/ass1-data/part1/iris-training.txt"
+ */
 public class KNN {
     public ArrayList testList = new ArrayList<Flower>();
     public ArrayList trainList = new ArrayList<Flower>();
 
     public ArrayList predictions = new ArrayList<Response>();
 
-    public void Knn() {
-        File testFile = new File("Data/ass1-data/part1/iris-test.txt");
-        File trainingFile = new File("Data/ass1-data/part1/iris-training.txt");
+    public void Knn(String test, String training) {
+        File testFile = new File(test);
+        File trainingFile = new File(training);
         Scanner scTest = null;
         Scanner scTrain = null;
 
@@ -79,11 +83,14 @@ public class KNN {
                 classVotes.add(temp);
             }
             else {
+                Response temp = responses[i];
+                temp.num = 1;
                 classVotes.add(responses[i]);
             }
         }
         List list = new ArrayList(classVotes);
         Collections.sort(list);
+        Collections.reverse(list);
         return (Response) list.get(0);
     }
 
@@ -130,7 +137,7 @@ public class KNN {
 
         @Override
         public int compareTo(FlowerDouble o) {
-            if(num >  o.num) return -1;
+            if(num <= o.num) return -1;
             else return 1;
         }
 
@@ -147,8 +154,7 @@ public class KNN {
 
         @Override
         public int compareTo(Response o) {
-            if (num > o.num) return 1;
-            else return -1;
+            return Integer.compare(num, o.num);
         }
     }
 
@@ -156,7 +162,7 @@ public class KNN {
 
     public static void main(String[] args) {
         KNN start = new KNN();
-        start.Knn();
+        start.Knn(args[0], args[1]);
     }
 
 }
