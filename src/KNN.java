@@ -12,9 +12,9 @@ public class KNN {
 
     public ArrayList predictions = new ArrayList<Response>();
 
-    public void Knn(String test, String training) {
-        File testFile = new File(test);
-        File trainingFile = new File(training);
+    public void Knn(/*String training, String test*/) {
+        File testFile = new File("Data/ass1-data/part1/iris-test.txt");
+        File trainingFile = new File("Data/ass1-data/part1/iris-training.txt");
         Scanner scTest = null;
         Scanner scTrain = null;
 
@@ -33,11 +33,11 @@ public class KNN {
 
         int k = 3;
 
-        for (int i = 0; i < testList.size(); i++){
+        for (int i = 0; i < testList.size() - 1; i++){
          Flower[] neighbours = getNeighbours((Flower) testList.get(i), k);
          Response result = getResponses(neighbours);
          predictions.add(result);
-         System.out.println("predicted: " + result.flower.name + " | actual: " + ((Flower) testList.get(i)).name);
+         System.out.println("predicted: " + result.flower + " | actual: " + ((Flower) testList.get(i)).name);
         }
         Float accuracy = getAccuracy(testList, predictions);
         System.out.print("Accuracy: " + accuracy + "%");
@@ -55,16 +55,17 @@ public class KNN {
     public Flower[] getNeighbours(Flower testInstance, int k) {
         List<FlowerDouble> distances = new ArrayList<>();
         double dist;
+        int length = testInstance.measure.length - 1;
 
         for (int i = 0; i < trainList.size() - 1; i++){
-            dist = EuclideanDistance(testInstance, (Flower) trainList.get(i), 3);
+            dist = EuclideanDistance(testInstance, (Flower) trainList.get(i), length);
             distances.add(new FlowerDouble((Flower) trainList.get(i), dist));
         }
         Collections.sort(distances);
 
         Flower[] neighbours = new Flower[k];
 
-        for(int i = 0; i < k; i++){
+        for(int i = 0; i < k - 1; i++){
             neighbours[i] = distances.get(i).flower;
         }
 
@@ -72,26 +73,27 @@ public class KNN {
     }
 
     public Response getResponses(Flower[] neighbours){
-        Set classVotes = new HashSet<Response>();
+        List classVotes = new ArrayList<Response>();
         Response[] responses = new Response[neighbours.length + 1];
         for(int i = 0; i < neighbours.length - 1; i++){
             responses[i] = new Response(neighbours[i], -1);
-            if(classVotes.contains(responses[i])){
-                Response temp = responses[i];
-                temp.num += 1;
-                classVotes.remove(responses[i]);
-                classVotes.add(temp);
-            }
+            for(int x = 0; x < classVotes.size() - 1; x++){
+
+                Response check = (Response) classVotes.get(x);
+                String sCheck = check.flower;
+
+                if(responses[i].flower.equals(sCheck)){
+                responses[i].num += 1;
+                }
             else {
-                Response temp = responses[i];
-                temp.num = 1;
-                classVotes.add(responses[i]);
+                responses[i].num = 1;
+                }
             }
         }
-        List list = new ArrayList(classVotes);
-        Collections.sort(list);
-        Collections.reverse(list);
-        return (Response) list.get(0);
+
+        Collections.sort(classVotes);
+        Collections.reverse(classVotes);
+        return (Response) classVotes.get(0);
     }
 
     public float getAccuracy(ArrayList testList, ArrayList predictions){
@@ -100,7 +102,7 @@ public class KNN {
             Flower test = (Flower) testList.get(i);
             String testName = test.name;
             Response predict = (Response) predictions.get(i);
-            String predictName = predict.flower.name;
+            String predictName = predict.flower;
             if (testName.equals(predictName)){
                 correct += 1;
             }
@@ -144,11 +146,11 @@ public class KNN {
     }
 
     class Response implements Comparable<Response>{
-        Flower flower;
+        String flower;
         int num;
 
         public Response(Flower flower, int num){
-            this.flower = flower;
+            this.flower = flower.name;
             this.num = num;
         }
 
@@ -162,7 +164,7 @@ public class KNN {
 
     public static void main(String[] args) {
         KNN start = new KNN();
-        start.Knn(args[0], args[1]);
+        start.Knn(/*args[0], args[1]*/);
     }
 
 }
