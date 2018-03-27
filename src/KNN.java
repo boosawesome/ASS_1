@@ -79,7 +79,7 @@ public class KNN {
             responses[i] = new Response(neighbours[i], -1);
             for(int x = 0; x < classVotes.size() - 1; x++){
 
-                Response check = (Response) classVotes.get(x);
+                Response check = (Response) classVotes.get(x);//***FIX HERE***
                 String sCheck = check.flower;
 
                 if(responses[i].flower.equals(sCheck)){
