@@ -1,5 +1,6 @@
-import java.io.File;
 import java.io.IOException;
+import java.io.File;
+import java.lang.reflect.Array;
 import java.util.*;
 
 /*
@@ -10,7 +11,8 @@ public class KNN {
     public ArrayList testList = new ArrayList<Flower>();
     public ArrayList trainList = new ArrayList<Flower>();
 
-    public ArrayList predictions = new ArrayList<Response>();
+    public ArrayList predictions = new ArrayList<String>();
+    public final int k = 3;
 
     public void Knn(/*String training, String test*/) {
         File testFile = new File("Data/ass1-data/part1/iris-test.txt");
@@ -31,13 +33,12 @@ public class KNN {
         while (scTrain != null && scTrain.hasNext())
             trainList.add(new Flower(scTrain.nextDouble(), scTrain.nextDouble(), scTrain.nextDouble(), scTrain.nextDouble(), scTrain.next()));
 
-        int k = 3;
 
-        for (int i = 0; i < testList.size() - 1; i++){
-         Flower[] neighbours = getNeighbours((Flower) testList.get(i), k);
-         Response result = getResponses(neighbours);
-         predictions.add(result);
-         System.out.println("predicted: " + result.flower + " | actual: " + ((Flower) testList.get(i)).name);
+        for (int i = 0; i < testList.size() - 1; i++) {
+            Flower[] neighbours = getNeighbours((Flower) testList.get(i), k);
+            String result = getResponses(neighbours);
+            predictions.add(result);
+            System.out.println("predicted: " + result + " | actual: " + ((Flower) testList.get(i)).name);
         }
         Float accuracy = getAccuracy(testList, predictions);
         System.out.print("Accuracy: " + accuracy + "%");
@@ -57,7 +58,7 @@ public class KNN {
         double dist;
         int length = testInstance.measure.length - 1;
 
-        for (int i = 0; i < trainList.size() - 1; i++){
+        for (int i = 0; i < trainList.size() - 1; i++) {
             dist = EuclideanDistance(testInstance, (Flower) trainList.get(i), length);
             distances.add(new FlowerDouble((Flower) trainList.get(i), dist));
         }
@@ -65,49 +66,50 @@ public class KNN {
 
         Flower[] neighbours = new Flower[k];
 
-        for(int i = 0; i < k - 1; i++){
+        for (int i = 0; i < k - 1; i++) {
             neighbours[i] = distances.get(i).flower;
         }
 
         return neighbours;
     }
 
-    public Response getResponses(Flower[] neighbours){
-        List classVotes = new ArrayList<Response>();
-        Response[] responses = new Response[neighbours.length + 1];
-        for(int i = 0; i < neighbours.length - 1; i++){
-            responses[i] = new Response(neighbours[i], -1);
-            for(int x = 0; x < classVotes.size() - 1; x++){
+    public String getResponses(Flower[] neighbours) {
+        int setosa = 0;
+        int versicolor = 0;
+        int virginica = 0;
 
-                Response check = (Response) classVotes.get(x);//***FIX HERE***
-                String sCheck = check.flower;
-
-                if(responses[i].flower.equals(sCheck)){
-                responses[i].num += 1;
-                }
-            else {
-                responses[i].num = 1;
-                }
-            }
+        for (int i = 0; i < neighbours.length - 1; i++) {
+            System.out.println(i);
+         if (neighbours[i].name.equals("Iris-setosa")) setosa++;
+         if (neighbours[i].name.equals("Iris-virginica")) virginica++;
+         if (neighbours[i].name.equals("Iris-versicolor")) versicolor++;
         }
 
-        Collections.sort(classVotes);
-        Collections.reverse(classVotes);
-        return (Response) classVotes.get(0);
+        if(setosa > versicolor && setosa > virginica){
+            System.out.println(setosa + " " + virginica + " " + versicolor);
+
+            return "Iris-setosa";
+        }
+        else if (versicolor > setosa && versicolor > virginica){
+            System.out.println(setosa + " " + virginica + " " + versicolor);
+
+            return "Iris-versicolor";
+        }
+        System.out.println(setosa + " " + virginica + " " + versicolor);
+        return "Iris-virginica";
     }
 
-    public float getAccuracy(ArrayList testList, ArrayList predictions){
+    public float getAccuracy(ArrayList testList, ArrayList predictions) {
         float correct = 0;
-        for(int i = 0; i < testList.size() - 1; i++){
+        for (int i = 0; i < testList.size() - 1; i++) {
             Flower test = (Flower) testList.get(i);
             String testName = test.name;
-            Response predict = (Response) predictions.get(i);
-            String predictName = predict.flower;
-            if (testName.equals(predictName)){
+            String predict = (String) predictions.get(i);
+            if (testName.equals(predict)) {
                 correct += 1;
             }
         }
-        return (correct/(float)testList.size()) * (float) 100.0;
+        return (correct / (float) testList.size()) * (float) 100.0;
     }
 
     class Flower {
@@ -119,7 +121,7 @@ public class KNN {
 
         String name;
 
-        public Flower(double slength, double swidth, double plength, double pwidth, String name){
+        public Flower(double slength, double swidth, double plength, double pwidth, String name) {
             this.measure[0] = slength;
             this.measure[1] = swidth;
             this.measure[2] = plength;
@@ -128,38 +130,22 @@ public class KNN {
         }
     }
 
-    class FlowerDouble implements Comparable<FlowerDouble>{
+    class FlowerDouble implements Comparable<FlowerDouble> {
         Flower flower;
         double num;
 
-        public FlowerDouble(Flower flower, double num){
+        public FlowerDouble(Flower flower, double num) {
             this.flower = flower;
             this.num = num;
         }
 
         @Override
         public int compareTo(FlowerDouble o) {
-            if(num <= o.num) return -1;
+            if (num <= o.num) return -1;
             else return 1;
         }
 
     }
-
-    class Response implements Comparable<Response>{
-        String flower;
-        int num;
-
-        public Response(Flower flower, int num){
-            this.flower = flower.name;
-            this.num = num;
-        }
-
-        @Override
-        public int compareTo(Response o) {
-            return Integer.compare(num, o.num);
-        }
-    }
-
 
 
     public static void main(String[] args) {
