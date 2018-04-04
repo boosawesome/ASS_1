@@ -5,81 +5,121 @@ public class DecisionTree {
 
 
     private List<String> categoryNames;
+    private List<List<Instance>> split;
+    public void run(String fname) {
+
+    }
+
+    private List<List<Instance>> getSplit(Node node, int maxDepth, int minSize, int depth){
+        Node True = node.True;
+        Node False = node.False;
+
+        node.delete();
 
 
-    private void readDataFile(String fname){
+        return null;
+    }
+
+    private void readDataFile(String fname) {
         /* format of names file:
          * names of categories, separated by spaces
          * names of attributes
          * category followed by true's and false's for each instance
          */
-        System.out.println("Reading data from file "+fname);
+        System.out.println("Reading data from file " + fname);
         try {
             Scanner din = new Scanner(new File(fname));
 
             categoryNames = new ArrayList<String>();
-            for (Scanner s = new Scanner(din.nextLine()); s.hasNext();) categoryNames.add(s.next());
+            for (Scanner s = new Scanner(din.nextLine()); s.hasNext(); ) categoryNames.add(s.next());
             int numCategories = categoryNames.size();
-            System.out.println(numCategories +" categories");
+            System.out.println(numCategories + " categories");
 
             List<String> attNames = new ArrayList<String>();
-            for (Scanner s = new Scanner(din.nextLine()); s.hasNext();) attNames.add(s.next());
+            for (Scanner s = new Scanner(din.nextLine()); s.hasNext(); ) attNames.add(s.next());
             int numAtts = attNames.size();
-            System.out.println(numAtts +" attributes");
+            System.out.println(numAtts + " attributes");
 
             List<Instance> allInstances = readInstances(din);
             din.close();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Data File caused IO exception");
         }
     }
 
-
-    private List<Instance> readInstances(Scanner din){
+    private List<Instance> readInstances(Scanner din) {
         /* instance = classname and space separated attribute values */
         List<Instance> instances = new ArrayList<Instance>();
         String ln;
-        while (din.hasNext()){
+        while (din.hasNext()) {
             Scanner line = new Scanner(din.nextLine());
-            instances.add(new Instance(categoryNames.indexOf(line.next()),line));
+            instances.add(new Instance(categoryNames.indexOf(line.next()), line));
         }
-        System.out.println("Read " + instances.size()+" instances");
+        System.out.println("Read " + instances.size() + " instances");
         return instances;
     }
 
+    private class Node {
+        private Node True;
+        private Node False;
 
+        private Float prob;
+
+
+        public Node(Float prob){
+            this.prob = prob;
+            this.True = null;
+            this.False = null;
+        }
+
+        public void delete(){
+            this.False = null;
+            this.True = null;
+        }
+
+        public Node getTrue() {
+            return True;
+        }
+
+        public Node getFalse() {
+            return False;
+        }
+
+        public Float getProb() {
+            return prob;
+        }
+    }
 
     private class Instance {
 
         private int category;
         private List<Boolean> vals;
 
-        public Instance(int cat, Scanner s){
+        public Instance(int cat, Scanner s) {
             category = cat;
             vals = new ArrayList<Boolean>();
             while (s.hasNextBoolean()) vals.add(s.nextBoolean());
         }
 
-        public boolean getAtt(int index){
+        public boolean getAtt(int index) {
             return vals.get(index);
         }
 
-        public int getCategory(){
+        public int getCategory() {
             return category;
         }
 
-        public String toString(){
+        public String toString() {
             StringBuilder ans = new StringBuilder(categoryNames.get(category));
             ans.append(" ");
             for (Boolean val : vals)
-                ans.append(val?"true  ":"false ");
+                ans.append(val ? "true  " : "false ");
             return ans.toString();
         }
 
     }
 
-    public static void main(String args[]){
-        new DecisionTree();
+    public static void main(String args[]) {
+        new DecisionTree().run("");
     }
 }

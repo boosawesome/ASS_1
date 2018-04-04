@@ -80,15 +80,14 @@ public class KNN {
         int virginica = 0;
 
         for (int i = 0; i < neighbours.length; i++) {
-         if (neighbours[i].name.equals("Iris-setosa")) setosa++;
-         if (neighbours[i].name.equals("Iris-virginica")) virginica++;
-         if (neighbours[i].name.equals("Iris-versicolor")) versicolor++;
+            if (neighbours[i].name.equals("Iris-setosa")) setosa++;
+            if (neighbours[i].name.equals("Iris-virginica")) virginica++;
+            if (neighbours[i].name.equals("Iris-versicolor")) versicolor++;
         }
 
-        if(setosa > versicolor && setosa > virginica){
+        if (setosa > versicolor && setosa > virginica) {
             return "Iris-setosa";
-        }
-        else if (versicolor > setosa && versicolor > virginica){
+        } else if (versicolor > setosa && versicolor > virginica) {
             return "Iris-versicolor";
         }
         return "Iris-virginica";
