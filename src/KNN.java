@@ -14,9 +14,9 @@ public class KNN {
     public ArrayList predictions = new ArrayList<String>();
     public final int k = 3;
 
-    public void Knn(/*String training, String test*/) {
-        File testFile = new File("Data/ass1-data/part1/iris-test.txt");
-        File trainingFile = new File("Data/ass1-data/part1/iris-training.txt");
+    public void Knn(String training, String test) {
+        File testFile = new File(test);
+        File trainingFile = new File(training);
         Scanner scTest = null;
         Scanner scTrain = null;
 
@@ -47,7 +47,8 @@ public class KNN {
 
     public double EuclideanDistance(Flower first, Flower second, int length) {
         double distance = 0;
-        for (int i = 0; i < length - 1; i++) {
+
+        for (int i = 0; i < length; i++) {
             distance += Math.pow((first.measure[i] - second.measure[i]), 2);
         }
         return Math.sqrt(distance);
@@ -66,7 +67,7 @@ public class KNN {
 
         Flower[] neighbours = new Flower[k];
 
-        for (int i = 0; i < k - 1; i++) {
+        for (int i = 0; i < k; i++) {
             neighbours[i] = distances.get(i).flower;
         }
 
@@ -78,8 +79,7 @@ public class KNN {
         int versicolor = 0;
         int virginica = 0;
 
-        for (int i = 0; i < neighbours.length - 1; i++) {
-            System.out.println(i);
+        for (int i = 0; i < neighbours.length; i++) {
          if (neighbours[i].name.equals("Iris-setosa")) setosa++;
          if (neighbours[i].name.equals("Iris-virginica")) virginica++;
          if (neighbours[i].name.equals("Iris-versicolor")) versicolor++;
@@ -150,7 +150,7 @@ public class KNN {
 
     public static void main(String[] args) {
         KNN start = new KNN();
-        start.Knn(/*args[0], args[1]*/);
+        start.Knn(args[0], args[1]);
     }
 
 }
