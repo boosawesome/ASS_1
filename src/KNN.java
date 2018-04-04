@@ -144,8 +144,7 @@ public class KNN {
 
 
     public static void main(String[] args) {
-        KNN start = new KNN();
-        start.Knn(args[0], args[1]);
+        new KNN().Knn(args[0], args[1]);
     }
 
 }
