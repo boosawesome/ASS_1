@@ -86,16 +86,11 @@ public class KNN {
         }
 
         if(setosa > versicolor && setosa > virginica){
-            System.out.println(setosa + " " + virginica + " " + versicolor);
-
             return "Iris-setosa";
         }
         else if (versicolor > setosa && versicolor > virginica){
-            System.out.println(setosa + " " + virginica + " " + versicolor);
-
             return "Iris-versicolor";
         }
-        System.out.println(setosa + " " + virginica + " " + versicolor);
         return "Iris-virginica";
     }
 
