@@ -4,9 +4,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
-import weka.core.converters.ArffLoader;
-import weka.core.converters.TextDirectoryLoader;
-
 
 public class DecisionTree {
 
@@ -25,6 +22,8 @@ public class DecisionTree {
         StringTokenizer classTokens = new StringTokenizer(classes);
         String attributes = stringScan.nextLine();
         StringTokenizer attTokens = new StringTokenizer(attributes);
+
+        File returnable = new File(arffName);
 
         PrintWriter printWriter = new PrintWriter(arffName);
 
@@ -56,7 +55,7 @@ public class DecisionTree {
             printWriter.println(instanceClass);
         }
 
-        return null;
+        return returnable;
     }
 
     public void run(String fname) {
@@ -203,6 +202,6 @@ public class DecisionTree {
     }
 
     public static void main(String args[]) {
-        new DecisionTree().run("");
+        new DecisionTree().run("Data/ass1-data/part2/hepatitis.dat");
     }
 }
