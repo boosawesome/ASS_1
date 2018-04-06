@@ -1,16 +1,69 @@
-import java.util.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.util.StringTokenizer;
+
+import weka.core.converters.ArffLoader;
+import weka.core.converters.TextDirectoryLoader;
+
 
 public class DecisionTree {
 
 
     private List<String> categoryNames;
     private List<List<Instance>> split;
+
+    private int k = 2;
+    private int treeSize = 112;
+
+    public File convertTxt(String fname) throws IOException {
+        String arffName = fname.substring(0, fname.length() - 3) + ".arff";
+
+        Scanner stringScan = new Scanner(new File(fname));
+        String classes = stringScan.nextLine();
+        StringTokenizer classTokens = new StringTokenizer(classes);
+        String attributes = stringScan.nextLine();
+        StringTokenizer attTokens = new StringTokenizer(attributes);
+
+        PrintWriter printWriter = new PrintWriter(arffName);
+
+        printWriter.println("@RELATION " + arffName);
+        printWriter.println();
+
+        while(attTokens.hasMoreTokens()) {
+            printWriter.println("@ATTRIBUTE " + attTokens.nextToken() + "  STRING");
+        }
+
+        printWriter.print("@ATTRIBUTE class {" );
+        while(classTokens.hasMoreTokens()){
+            printWriter.print(classTokens.nextToken());
+            if (classTokens.hasMoreTokens()) printWriter.print(",");
+        }
+
+        printWriter.println("}");
+
+        printWriter.println("@DATA");
+
+        while(stringScan.hasNextLine()){
+            String dataLine = stringScan.nextLine();
+            StringTokenizer dataTokens = new StringTokenizer(dataLine);
+            String instanceClass = dataTokens.nextToken();
+
+            while(dataTokens.hasMoreTokens()){
+                printWriter.print(dataTokens.nextToken() + ",");
+            }
+            printWriter.println(instanceClass);
+        }
+
+        return null;
+    }
+
     public void run(String fname) {
 
     }
 
-    private List<List<Instance>> getSplit(Node node, int maxDepth, int minSize, int depth){
+    private List<List<Instance>> getSplit(Node node, int maxDepth, int minSize, int depth) {
         Node True = node.True;
         Node False = node.False;
 
@@ -63,16 +116,18 @@ public class DecisionTree {
         private Node True;
         private Node False;
 
+        private String attName;
+
         private Float prob;
 
 
-        public Node(Float prob){
+        public Node(Float prob) {
             this.prob = prob;
             this.True = null;
             this.False = null;
         }
 
-        public void delete(){
+        public void delete() {
             this.False = null;
             this.True = null;
         }
@@ -88,7 +143,35 @@ public class DecisionTree {
         public Float getProb() {
             return prob;
         }
+
+        public String getAttName() {
+            return attName;
+        }
+
+        public void report(String indent) {
+            System.out.format("%s%s = True:\n",
+                    indent, attName);
+            False.report(indent + "    ");
+            System.out.format("%s%s = False:\n",
+                    indent, attName);
+            True.report(indent + "    ");
+        }
     }
+
+    private class Leaf {
+        private String className;
+        private int count;
+        private Float prob;
+
+        public void report(String indent) {
+            if (count == 0)
+                System.out.format("%sUnknown\n", indent);
+            else
+                System.out.format("%sClass %s, prob=$4.2f\n",
+                        indent, className, prob);
+        }
+    }
+
 
     private class Instance {
 
