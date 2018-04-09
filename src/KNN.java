@@ -12,35 +12,9 @@ public class KNN {
 
     public ArrayList predictions = new ArrayList<Response>();
 
-    public void Knn(String test, String training) {
-        File testFile = new File(test);
-        File trainingFile = new File(training);
-        Scanner scTest = null;
-        Scanner scTrain = null;
-
-        try {
-            scTest = new Scanner(testFile);
-            scTrain = new Scanner(trainingFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        while (scTest != null && scTest.hasNext())
-            testList.add(new Flower(scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.next()));
-
-        while (scTrain != null && scTrain.hasNext())
-            trainList.add(new Flower(scTrain.nextDouble(), scTrain.nextDouble(), scTrain.nextDouble(), scTrain.nextDouble(), scTrain.next()));
-
-        int k = 3;
-
-        for (int i = 0; i < testList.size(); i++){
-         Flower[] neighbours = getNeighbours((Flower) testList.get(i), k);
-         Response result = getResponses(neighbours);
-         predictions.add(result);
-         System.out.println("predicted: " + result.flower.name + " | actual: " + ((Flower) testList.get(i)).name);
-        }
-        Float accuracy = getAccuracy(testList, predictions);
-        System.out.print("Accuracy: " + accuracy + "%");
+    public static void main(String[] args) {
+        KNN start = new KNN();
+        start.Knn(/*args[0], args[1]*/);
     }
 
 
@@ -158,11 +132,35 @@ public class KNN {
         }
     }
 
+    public void Knn(/*String test, String training*/) {
+        File testFile = new File("Data/ass1-data/part1/iris-test.txt");
+        File trainingFile = new File("Data/ass1-data/part1/iris-training.txt");
+        Scanner scTest = null;
+        Scanner scTrain = null;
 
+        try {
+            scTest = new Scanner(testFile);
+            scTrain = new Scanner(trainingFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-    public static void main(String[] args) {
-        KNN start = new KNN();
-        start.Knn(args[0], args[1]);
+        while (scTest != null && scTest.hasNext())
+            testList.add(new Flower(scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.nextDouble(), scTest.next()));
+
+        while (scTrain != null && scTrain.hasNext())
+            trainList.add(new Flower(scTrain.nextDouble(), scTrain.nextDouble(), scTrain.nextDouble(), scTrain.nextDouble(), scTrain.next()));
+
+        int k = 3;
+
+        for (int i = 0; i < testList.size(); i++){
+         Flower[] neighbours = getNeighbours((Flower) testList.get(i), k);
+         Response result = getResponses(neighbours);
+         predictions.add(result);
+         System.out.println("predicted: " + result.flower.name + " | actual: " + ((Flower) testList.get(i)).name);
+        }
+        Float accuracy = getAccuracy(testList, predictions);
+        System.out.print("Accuracy: " + accuracy + "%");
     }
 
 }
