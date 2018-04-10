@@ -11,8 +11,12 @@ public class KNN {
     public ArrayList testList = new ArrayList<Flower>();
     public ArrayList trainList = new ArrayList<Flower>();
 
+    public final int k = 1;
     public ArrayList predictions = new ArrayList<String>();
-    public final int k = 3;
+
+    public static void main(String[] args) {
+        new KNN().Knn(args[0], args[1]);
+    }
 
     public void Knn(String training, String test) {
         File testFile = new File(test);
@@ -43,7 +47,6 @@ public class KNN {
         Float accuracy = getAccuracy(testList, predictions);
         System.out.print("Accuracy: " + accuracy + "%");
     }
-
 
     public double EuclideanDistance(Flower first, Flower second, int length) {
         double distance = 0;
@@ -139,11 +142,6 @@ public class KNN {
             else return 1;
         }
 
-    }
-
-
-    public static void main(String[] args) {
-        new KNN().Knn(args[0], args[1]);
     }
 
 }

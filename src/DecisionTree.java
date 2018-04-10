@@ -1,8 +1,5 @@
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+import java.util.*;
 
 
 public class DecisionTree {
@@ -11,51 +8,10 @@ public class DecisionTree {
     private List<String> categoryNames;
     private List<List<Instance>> split;
 
-    private int k = 2;
-    private int treeSize = 112;
+    private String probableClass;
 
-    public File convertTxt(String fname) throws IOException {
-        String arffName = fname.substring(0, fname.length() - 3) + ".arff";
-
-        Scanner stringScan = new Scanner(new File(fname));
-        String classes = stringScan.nextLine();
-        StringTokenizer classTokens = new StringTokenizer(classes);
-        String attributes = stringScan.nextLine();
-        StringTokenizer attTokens = new StringTokenizer(attributes);
-
-        File returnable = new File(arffName);
-
-        PrintWriter printWriter = new PrintWriter(arffName);
-
-        printWriter.println("@RELATION " + arffName);
-        printWriter.println();
-
-        while(attTokens.hasMoreTokens()) {
-            printWriter.println("@ATTRIBUTE " + attTokens.nextToken() + "  STRING");
-        }
-
-        printWriter.print("@ATTRIBUTE class {" );
-        while(classTokens.hasMoreTokens()){
-            printWriter.print(classTokens.nextToken());
-            if (classTokens.hasMoreTokens()) printWriter.print(",");
-        }
-
-        printWriter.println("}");
-
-        printWriter.println("@DATA");
-
-        while(stringScan.hasNextLine()){
-            String dataLine = stringScan.nextLine();
-            StringTokenizer dataTokens = new StringTokenizer(dataLine);
-            String instanceClass = dataTokens.nextToken();
-
-            while(dataTokens.hasMoreTokens()){
-                printWriter.print(dataTokens.nextToken() + ",");
-            }
-            printWriter.println(instanceClass);
-        }
-
-        return returnable;
+    public static void main(String args[]) {
+        new DecisionTree().run("Data/ass1-data/part2/hepatitis.dat");
     }
 
     public void run(String fname) {
@@ -69,6 +25,61 @@ public class DecisionTree {
         node.delete();
 
 
+        return null;
+    }
+
+    public Node buildTree(Set<Instance> instances, List<Boolean> attributes) {
+        if (instances.isEmpty()) {
+            //return baseline predictor
+        }
+
+        for (Instance x : instances) {
+            for (Instance i : instances) {
+                if (!(x.name.equals(i.name))) {
+                    break;
+                } else {
+                    Leaf returnable = new Leaf(1f);
+                    returnable.className = i.name;
+                    return returnable;
+                }
+            }
+
+        }
+
+        if (attributes.isEmpty()) {
+            //return leaf containing name/probability of majority class
+        } else {
+            Float purity = 0f;
+            int attribute = 0;
+            Set<Instance> instanceTrue = new HashSet<>();
+            Set<Instance> instanceFalse = new HashSet<>();
+
+            for (int i = 0; i < attributes.size(); i++) {
+                Set<Instance> tempTrue = new HashSet<>();
+                Set<Instance> tempFalse = new HashSet<>();
+
+                for (Instance y : instances) {
+                    if (y.vals.get(i) == true) {
+                        tempTrue.add(y);
+                    } else tempFalse.add(y);
+                }
+                Float averagePurity = (calculatePurity(tempTrue) + calculatePurity(tempFalse)) / 2;
+                if (averagePurity > purity) {
+                    attribute = i;
+                    instanceTrue = tempTrue;
+                    instanceFalse = tempFalse;
+                }
+            }
+            attributes.remove(attribute);
+            Node left = buildTree(instanceTrue, attributes);
+            Node right = buildTree(instanceFalse, attributes);
+            Node returnable = new Node(attribute, left, right);
+
+            returnable.True = left;
+            returnable.False = right;
+
+//            returnable.attName = attribute;
+        }
         return null;
     }
 
@@ -105,25 +116,32 @@ public class DecisionTree {
         String ln;
         while (din.hasNext()) {
             Scanner line = new Scanner(din.nextLine());
-            instances.add(new Instance(categoryNames.indexOf(line.next()), line));
+            String name = line.next();
+            instances.add(new Instance(name, categoryNames.indexOf(line.next()), line));
         }
         System.out.println("Read " + instances.size() + " instances");
         return instances;
+    }
+
+    private Float calculatePurity(Set<Instance> Instances) {
+
+        return 0f;
     }
 
     private class Node {
         private Node True;
         private Node False;
 
-        private String attName;
+        private int att;
 
-        private Float prob;
 
+
+        public Node(int att, Node t, Node f) {
+            this.True = t;
+            this.False = f;
+        }
 
         public Node(Float prob) {
-            this.prob = prob;
-            this.True = null;
-            this.False = null;
         }
 
         public void delete() {
@@ -139,28 +157,29 @@ public class DecisionTree {
             return False;
         }
 
-        public Float getProb() {
-            return prob;
-        }
 
-        public String getAttName() {
-            return attName;
-        }
-
-        public void report(String indent) {
-            System.out.format("%s%s = True:\n",
-                    indent, attName);
-            False.report(indent + "    ");
-            System.out.format("%s%s = False:\n",
-                    indent, attName);
-            True.report(indent + "    ");
-        }
+//        public String getAttName() {
+//            return attName;
+//        }
+//
+//        public void report(String indent) {
+//            System.out.format("%s%s = True:\n",
+//                    indent, attName);
+//            False.report(indent + "    ");
+//            System.out.format("%s%s = False:\n",
+//                    indent, attName);
+//            True.report(indent + "    ");
+//        }
     }
 
-    private class Leaf {
+    private class Leaf extends Node {
         private String className;
         private int count;
         private Float prob;
+
+        public Leaf(Float prob) {
+            super(prob);
+        }
 
         public void report(String indent) {
             if (count == 0)
@@ -171,13 +190,14 @@ public class DecisionTree {
         }
     }
 
-
     private class Instance {
 
+        private String name;
         private int category;
         private List<Boolean> vals;
 
-        public Instance(int cat, Scanner s) {
+        public Instance(String n, int cat, Scanner s) {
+            name = n;
             category = cat;
             vals = new ArrayList<Boolean>();
             while (s.hasNextBoolean()) vals.add(s.nextBoolean());
@@ -199,9 +219,5 @@ public class DecisionTree {
             return ans.toString();
         }
 
-    }
-
-    public static void main(String args[]) {
-        new DecisionTree().run("Data/ass1-data/part2/hepatitis.dat");
     }
 }
