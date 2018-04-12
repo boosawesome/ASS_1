@@ -8,26 +8,26 @@ public class DecisionTree {
     private List<Instance> allInstances;
     private Node root;
 
-    private DecisionTree(String s) {
-        readDataFile(s);
-        Set<Instance> so = new HashSet<>(allInstances);
+    private DecisionTree(String fname) {
+        readDataFile(fname);
+        Set<Instance> instances = new HashSet<>(allInstances);
         List<String> list = new ArrayList<>(attNames);
-        root = constructTree(so, list);
-        nonLeafReport("", root);
+        root = buildTree(instances, list);
+        nodeReport("", root);
     }
 
     public static void main(String[] args) {
-        new TestDTL(args[0], args[1]);
+        new TestDecisionTree(args[0], args[1]);
     }
 
-    private void nonLeafReport(String indent, Node n) {
+    private void nodeReport(String indent, Node n) {
         if (n.getLeftNode() != null) {
             System.out.format("%s%s = True:\n", indent, n.getName());
-            nonLeafReport(indent + " ", n.getLeftNode());
+            nodeReport(indent + " ", n.getLeftNode());
         }
         if (n.getRightNode() != null) {
             System.out.format("%s%s = False:\n", indent, n.getName());
-            nonLeafReport(indent + " ", n.getRightNode());
+            nodeReport(indent + " ", n.getRightNode());
         }
         if (n.getLeftNode() == null && n.getRightNode() == null) {
             leafReport(indent, n);
@@ -38,7 +38,7 @@ public class DecisionTree {
         System.out.format("%sClass %s, prob= " + n.getProbability() + "\n", indent, n.getName());
     }
 
-    private Node constructTree(Set<Instance> instances, List<String> attributes) {
+    private Node buildTree(Set<Instance> instances, List<String> attributes) {
 
         String bestAtt;
         Set<Instance> bestTrueInstances = new HashSet<>();
@@ -64,7 +64,7 @@ public class DecisionTree {
             for (String s : attributes) {
                 Set<Instance> trueInstances = getTrueInstances(instances, s);
                 Set<Instance> falseInstances = getFalseInstances(instances, s);
-                double d = computePurityOfAttribute(s, trueInstances, falseInstances);
+                double d = calculatePurityOfAttribute(s, trueInstances, falseInstances);
 
                 if (d < best) {
                     bestAtt = s;
@@ -75,32 +75,32 @@ public class DecisionTree {
             }
         }
         attributes.remove(bestAtt);
-        Node l = constructTree(bestTrueInstances, attributes);
-        Node r = constructTree(bestFalseInstances, attributes);
+        Node left = buildTree(bestTrueInstances, attributes);
+        Node right = buildTree(bestFalseInstances, attributes);
         System.out.println(bestAtt);
-        return new Node(bestAtt, l, r);
+        return new Node(bestAtt, left, right);
     }
 
-    private float computePurityOfAttribute(String s, Set<Instance> trueInstances, Set<Instance> falseInstances) {
+    private float calculatePurityOfAttribute(String s, Set<Instance> trueInstances, Set<Instance> falseInstances) {
         System.out.println(trueInstances.isEmpty() + "" + falseInstances.isEmpty());
-        float tru = 0;
-        float fal = 0;
+        float trueCount = 0;
+        float falseCount = 0;
         float catOneOnFalse = 0;
         float catTwoOnFalse = 0;
         float catOneOnTrue = 0;
         float catTwoOnTrue = 0;
         float aImpurity = 0;
         float bImpurity = 0;
-        int l;
+        int x;
 
-        for (l = 0; l < attNames.size(); l++) {
-            if (attNames.get(l).equals(s))
+        for (x = 0; x < attNames.size(); x++) {
+            if (attNames.get(x).equals(s))
                 break;
         }
 
         for (Instance i : trueInstances) {
-            if (i.getAtt(l)) {
-                tru++;
+            if (i.getAtt(x)) {
+                trueCount++;
                 if (i.getCategory() == 0)
                     catOneOnTrue++;
                 else
@@ -108,8 +108,8 @@ public class DecisionTree {
             }
         }
         for (Instance i : falseInstances) {
-            if (!i.getAtt(l)) {
-                fal++;
+            if (!i.getAtt(x)) {
+                falseCount++;
                 if (i.getCategory() == 0)
                     catOneOnFalse++;
                 else
@@ -117,8 +117,8 @@ public class DecisionTree {
             }
         }
 
-        float probA = tru / (tru + fal);
-        float probB = fal / (tru + fal);
+        float probA = trueCount / (trueCount + falseCount);
+        float probB = falseCount / (trueCount + falseCount);
         if (catOneOnTrue + catTwoOnTrue != 0) {
             aImpurity = 2 * (catOneOnTrue / (catOneOnTrue + catTwoOnTrue)) * (catTwoOnTrue / (catOneOnTrue + catTwoOnTrue));
         }
@@ -162,53 +162,51 @@ public class DecisionTree {
     }
 
     private Node leafNodeOfMajorityClass(Set<Instance> instances) {
-        double catOne=0;
-        double catTwo=0;
-        for(Instance i:instances) {
-            if(i.getCategory()==0)
+        double catOne = 0;
+        double catTwo = 0;
+        for (Instance i : instances) {
+            if (i.getCategory() == 0)
                 catOne++;
             else
                 catTwo++;
         }
-        if(catOne>catTwo) {
-            Node n= new Node(categoryNames.get(0),null,null);
-            n.setProbability(catOne/(catOne+catTwo));
+        if (catOne > catTwo) {
+            Node n = new Node(categoryNames.get(0), null, null);
+            n.setProbability(catOne / (catOne + catTwo));
             return n;
-        }
-        else {
-            Node n= new Node(categoryNames.get(1),null,null);
-            n.setProbability(catTwo/(catOne+catTwo));
+        } else {
+            Node n = new Node(categoryNames.get(1), null, null);
+            n.setProbability(catTwo / (catOne + catTwo));
             return n;
         }
     }
 
     private Node leafNodeContainingNameOfClass(Set<Instance> instances) {
-        Instance inst=null;
-        for(Instance i:instances)
-            inst=i;
+        Instance inst = null;
+        for (Instance i : instances)
+            inst = i;
         assert inst != null;
-        Node n= new Node(categoryNames.get(inst.getCategory()),null,null);
+        Node n = new Node(categoryNames.get(inst.getCategory()), null, null);
         n.setProbability(1);
         return n;
     }
 
     private Node getBaseLine() {
-        double catOne=0;
-        double catTwo=0;
-        for(Instance i:allInstances) {
-            if(i.getCategory()==0)
+        double catOne = 0;
+        double catTwo = 0;
+        for (Instance i : allInstances) {
+            if (i.getCategory() == 0)
                 catOne++;
             else
                 catTwo++;
         }
-        if(catOne>catTwo) {
-            Node n= new Node(categoryNames.get(0),null,null);
-            n.setProbability(catOne/(catOne+catTwo));
+        if (catOne > catTwo) {
+            Node n = new Node(categoryNames.get(0), null, null);
+            n.setProbability(catOne / (catOne + catTwo));
             return n;
-        }
-        else {
-            Node n= new Node(categoryNames.get(1),null,null);
-            n.setProbability(catTwo/(catOne+catTwo));
+        } else {
+            Node n = new Node(categoryNames.get(1), null, null);
+            n.setProbability(catTwo / (catOne + catTwo));
             return n;
         }
     }
@@ -263,7 +261,7 @@ public class DecisionTree {
         return instances;
     }
 
-    private static class TestDTL {
+    private static class TestDecisionTree {
 
         private int numCategories;
         private int numAtts;
@@ -271,7 +269,7 @@ public class DecisionTree {
         private List<String> attNames;
         private List<Instance> allInstances;
 
-        private TestDTL(String testing, String training) {
+        private TestDecisionTree(String testing, String training) {
             readDataFile(testing);
             test(training);
         }
@@ -357,7 +355,7 @@ public class DecisionTree {
         }
     }
 
-    private class Node implements Comparable<Node>{
+    private class Node implements Comparable<Node> {
 
         private String name;
         private Node left;
@@ -366,14 +364,18 @@ public class DecisionTree {
 
 
         Node(String bestAtt, Node l, Node r) {
-            this.left=l;
-            this.right=r;
-            this.name=bestAtt;
+            this.left = l;
+            this.right = r;
+            this.name = bestAtt;
         }
 
-        Node getLeftNode() {return left;}
+        Node getLeftNode() {
+            return left;
+        }
 
-        Node getRightNode() {return right;}
+        Node getRightNode() {
+            return right;
+        }
 
 
         String getName() {
@@ -387,7 +389,7 @@ public class DecisionTree {
         }
 
         void setProbability(double d) {
-            this.probability=d;
+            this.probability = d;
         }
 
         @Override

@@ -8,17 +8,16 @@ import java.util.*;
 "Data/ass1-data/part1/iris-training.txt"
  */
 public class KNN {
-    public ArrayList testList = new ArrayList<Flower>();
-    public ArrayList trainList = new ArrayList<Flower>();
-
-    public final int k = 1;
-    public ArrayList predictions = new ArrayList<String>();
+    private final int k = 1;
+    private ArrayList testList = new ArrayList<Flower>();
+    private ArrayList trainList = new ArrayList<Flower>();
+    private ArrayList predictions = new ArrayList<String>();
 
     public static void main(String[] args) {
         new KNN().Knn(args[0], args[1]);
     }
 
-    public void Knn(String training, String test) {
+    private void Knn(String training, String test) {
         File testFile = new File(test);
         File trainingFile = new File(training);
         Scanner scTest = null;
@@ -48,7 +47,7 @@ public class KNN {
         System.out.print("Accuracy: " + accuracy + "%");
     }
 
-    public double EuclideanDistance(Flower first, Flower second, int length) {
+    private double EuclideanDistance(Flower first, Flower second, int length) {
         double distance = 0;
 
         for (int i = 0; i < length; i++) {
@@ -57,7 +56,7 @@ public class KNN {
         return Math.sqrt(distance);
     }
 
-    public Flower[] getNeighbours(Flower testInstance, int k) {
+    private Flower[] getNeighbours(Flower testInstance, int k) {
         List<FlowerDouble> distances = new ArrayList<>();
         double dist;
         int length = testInstance.measure.length - 1;
@@ -77,7 +76,7 @@ public class KNN {
         return neighbours;
     }
 
-    public String getResponses(Flower[] neighbours) {
+    private String getResponses(Flower[] neighbours) {
         int setosa = 0;
         int versicolor = 0;
         int virginica = 0;
@@ -96,7 +95,7 @@ public class KNN {
         return "Iris-virginica";
     }
 
-    public float getAccuracy(ArrayList testList, ArrayList predictions) {
+    private float getAccuracy(ArrayList testList, ArrayList predictions) {
         float correct = 0;
         for (int i = 0; i < testList.size() - 1; i++) {
             Flower test = (Flower) testList.get(i);
@@ -118,7 +117,7 @@ public class KNN {
 
         String name;
 
-        public Flower(double slength, double swidth, double plength, double pwidth, String name) {
+        Flower(double slength, double swidth, double plength, double pwidth, String name) {
             this.measure[0] = slength;
             this.measure[1] = swidth;
             this.measure[2] = plength;
@@ -131,7 +130,7 @@ public class KNN {
         Flower flower;
         double num;
 
-        public FlowerDouble(Flower flower, double num) {
+        FlowerDouble(Flower flower, double num) {
             this.flower = flower;
             this.num = num;
         }
