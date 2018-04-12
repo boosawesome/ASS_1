@@ -1,317 +1,344 @@
-import java.io.*;
 import java.util.*;
+import java.io.*;
 
 
 public class DecisionTree {
-
-
     private List<String> categoryNames;
+    private List<String> attNames;
+    private List<Instance> allInstances;
+    private Node root;
 
-    private String probableClass;
-    private Float probableProb;
+    private DecisionTree(String s) {
+        readDataFile(s);
+        Set<Instance> so = new HashSet<>(allInstances);
+        List<String> list = new ArrayList<>(attNames);
+        root = constructTree(so, list);
+        nonLeafReport("", root);
+    }
 
-    private DecisionTree(String training, String test) {
-        List<Instance> allInstances = readDataFile(training);
-        List<Instance> testInstances = readDataFile(test);
-        Set<Instance> instances = new HashSet<>(allInstances);
+    public static void main(String[] args) {
+        new TestDTL(args[0], args[1]);
+    }
 
-        String a = allInstances.get(0).name;
-        int a1 = 0;
-        String b = "";
-        int b1 = 0;
-        for (int i = 1; i < allInstances.size(); i++) {
-            if (!allInstances.get(i).equals(a)) {
-                b = allInstances.get(i).name;
-            }
+    private void nonLeafReport(String indent, Node n) {
+        if (n.getLeftNode() != null) {
+            System.out.format("%s%s = True:\n", indent, n.getName());
+            nonLeafReport(indent + " ", n.getLeftNode());
         }
-        for (int x = 0; x < allInstances.size(); x++) {
-            if (allInstances.get(x).name.equals(a)) {
-                a1++;
-            } else if (allInstances.get(x).name.equals(b)) {
-                b1++;
-            }
+        if (n.getRightNode() != null) {
+            System.out.format("%s%s = False:\n", indent, n.getName());
+            nonLeafReport(indent + " ", n.getRightNode());
         }
-
-        if (a1 >= b1) {
-            probableClass = a;
-            probableProb = (float) (a1 / allInstances.size());
-        } else {
-            probableClass = b;
-            probableProb = (float) (b1 / allInstances.size());
-        }
-        Node root = buildTree(instances, categoryNames);
-
-        printTree(root);
-
-        List<String> actual = null;
-        for (Instance i : testInstances) {
-            actual.add(classify(root, i));
+        if (n.getLeftNode() == null && n.getRightNode() == null) {
+            leafReport(indent, n);
         }
     }
 
-    public static void main(String args[]) {
-        new DecisionTree(args[0], args[1]);
+    private void leafReport(String indent, Node n) {
+        System.out.format("%sClass %s, prob= " + n.getProbability() + "\n", indent, n.getName());
     }
 
-    private Node buildTree(Set<Instance> instances, List<String> attributes) {
-        if (instances.isEmpty()) {
-            //return leaf baseline predictor
-            Leaf returnLeaf = new Leaf(probableProb);
-            returnLeaf.className = probableClass;
-            return returnLeaf;
+    private Node constructTree(Set<Instance> instances, List<String> attributes) {
+
+        String bestAtt;
+        Set<Instance> bestTrueInstances = new HashSet<>();
+        Set<Instance> bestFalseInstances = new HashSet<>();
+
+        if (instances.isEmpty())
+            return getBaseLine();
+
+        int c = 0;
+        int b = 0;
+
+        for (Instance i : instances) {
+            if (i.category == 0) b++;
+            else c++;
         }
-
-        for (Instance x : instances) {
-            for (Instance i : instances) {
-                if (!(x.name.equals(i.name))) {
-                    break;
-                } else {
-                    Leaf returnable = new Leaf(1f);
-                    returnable.className = i.name;
-                    return returnable;
-                }
-            }
-
-        }
-
-        if (attributes.isEmpty()) {
-            //return leaf containing name/probability of majority class
-            String a = attributes.get(0);
-            int a1 = 0;
-            String b = "";
-            int b1 = 0;
-
-            for (int i = 1; i < attributes.size(); i++) {
-                if (!attributes.get(i).equals(a)) {
-                    b = attributes.get(i);
-                }
-            }
-
+        if (c == 0 || b == 0)
+            return leafNodeContainingNameOfClass(instances);
+        else if (attributes.isEmpty())
+            return leafNodeOfMajorityClass(instances);
+        else {
+            double best = 1000;
+            bestAtt = "";
             for (String s : attributes) {
-                if (s.equals(a)) {
-                    a1++;
-                } else if (s.equals(b)) {
-                    b1++;
+                Set<Instance> trueInstances = getTrueInstances(instances, s);
+                Set<Instance> falseInstances = getFalseInstances(instances, s);
+                double d = computePurityOfAttribute(s, trueInstances, falseInstances);
+
+                if (d < best) {
+                    bestAtt = s;
+                    best = d;
+                    bestTrueInstances = trueInstances;
+                    bestFalseInstances = falseInstances;
                 }
             }
-
-            if (a1 >= b1) {
-                Leaf returnLeaf = new Leaf((float) a1 / attributes.size());
-                returnLeaf.className = a;
-                return returnLeaf;
-            } else if (b1 > a1) {
-                Leaf returnLeaf = new Leaf((float) b1 / attributes.size());
-                returnLeaf.className = b;
-                return returnLeaf;
-            }
-        } else {
-            Float purity = 0f;
-            int attribute = 0;
-            Set<Instance> instanceTrue = new HashSet<>();
-            Set<Instance> instanceFalse = new HashSet<>();
-
-            for (int i = 0; i < attributes.size(); i++) {
-                Set<Instance> tempTrue = new HashSet<>();
-                Set<Instance> tempFalse = new HashSet<>();
-
-                for (Instance y : instances) {
-                    if (y.vals.get(i)) {
-                        tempTrue.add(y);
-                    } else tempFalse.add(y);
-                }
-                Float averagePurity = (calculatePurity(tempTrue) + calculatePurity(tempFalse)) / 2;
-                if (averagePurity > purity) {
-                    attribute = i;
-                    instanceTrue = tempTrue;
-                    instanceFalse = tempFalse;
-                }
-            }
-            attributes.remove(attribute);
-            Node left = buildTree(instanceTrue, attributes);
-            Node right = buildTree(instanceFalse, attributes);
-            Node returnable = new Node(attribute, left, right);
-
-            returnable.True = left;
-            returnable.False = right;
-
-            return returnable;
         }
-        return null;
+        attributes.remove(bestAtt);
+        Node l = constructTree(bestTrueInstances, attributes);
+        Node r = constructTree(bestFalseInstances, attributes);
+        System.out.println(bestAtt);
+        return new Node(bestAtt, l, r);
     }
 
-    private List<Instance> readDataFile(String fname) {
-        /* format of names file:
-         * names of categories, separated by spaces
-         * names of attributes
-         * category followed by true's and false's for each instance
-         */
+    private float computePurityOfAttribute(String s, Set<Instance> trueInstances, Set<Instance> falseInstances) {
+        System.out.println(trueInstances.isEmpty() + "" + falseInstances.isEmpty());
+        float tru = 0;
+        float fal = 0;
+        float catOneOnFalse = 0;
+        float catTwoOnFalse = 0;
+        float catOneOnTrue = 0;
+        float catTwoOnTrue = 0;
+        float aImpurity = 0;
+        float bImpurity = 0;
+        int l;
+
+        for (l = 0; l < attNames.size(); l++) {
+            if (attNames.get(l).equals(s))
+                break;
+        }
+
+        for (Instance i : trueInstances) {
+            if (i.getAtt(l)) {
+                tru++;
+                if (i.getCategory() == 0)
+                    catOneOnTrue++;
+                else
+                    catTwoOnTrue++;
+            }
+        }
+        for (Instance i : falseInstances) {
+            if (!i.getAtt(l)) {
+                fal++;
+                if (i.getCategory() == 0)
+                    catOneOnFalse++;
+                else
+                    catTwoOnFalse++;
+            }
+        }
+
+        float probA = tru / (tru + fal);
+        float probB = fal / (tru + fal);
+        if (catOneOnTrue + catTwoOnTrue != 0) {
+            aImpurity = 2 * (catOneOnTrue / (catOneOnTrue + catTwoOnTrue)) * (catTwoOnTrue / (catOneOnTrue + catTwoOnTrue));
+        }
+        if (catTwoOnFalse + catOneOnFalse != 0)
+            bImpurity = 2 * (catOneOnFalse / (catOneOnFalse + catTwoOnFalse)) * (catTwoOnFalse / (catOneOnFalse + catTwoOnFalse));
+
+        float d = ((probA * aImpurity) + (bImpurity * probB));
+        System.out.println(d);
+        return d;
+    }
+
+    private Set<Instance> getFalseInstances(Set<Instance> instances, String s) {
+        Set<Instance> falseSet = new HashSet<>();
+        int l;
+        for (l = 0; l < attNames.size(); l++) {
+            if (attNames.get(l).equals(s))
+                break;
+        }
+        for (Instance i : instances) {
+            if (!i.getAtt(l)) {
+                falseSet.add(i);
+            }
+        }
+        return falseSet;
+    }
+
+    private Set<Instance> getTrueInstances(Set<Instance> instances, String s) {
+        Set<Instance> trueSet = new HashSet<>();
+        int l;
+        for (l = 0; l < attNames.size(); l++) {
+            if (attNames.get(l).equals(s)) {
+                break;
+            }
+        }
+        for (Instance i : instances) {
+            if (i.getAtt(l)) {
+                trueSet.add(i);
+            }
+        }
+        return trueSet;
+    }
+
+    private Node leafNodeOfMajorityClass(Set<Instance> instances) {
+        double catOne=0;
+        double catTwo=0;
+        for(Instance i:instances) {
+            if(i.getCategory()==0)
+                catOne++;
+            else
+                catTwo++;
+        }
+        if(catOne>catTwo) {
+            Node n= new Node(categoryNames.get(0),null,null);
+            n.setProbability(catOne/(catOne+catTwo));
+            return n;
+        }
+        else {
+            Node n= new Node(categoryNames.get(1),null,null);
+            n.setProbability(catTwo/(catOne+catTwo));
+            return n;
+        }
+    }
+
+    private Node leafNodeContainingNameOfClass(Set<Instance> instances) {
+        Instance inst=null;
+        for(Instance i:instances)
+            inst=i;
+        assert inst != null;
+        Node n= new Node(categoryNames.get(inst.getCategory()),null,null);
+        n.setProbability(1);
+        return n;
+    }
+
+    private Node getBaseLine() {
+        double catOne=0;
+        double catTwo=0;
+        for(Instance i:allInstances) {
+            if(i.getCategory()==0)
+                catOne++;
+            else
+                catTwo++;
+        }
+        if(catOne>catTwo) {
+            Node n= new Node(categoryNames.get(0),null,null);
+            n.setProbability(catOne/(catOne+catTwo));
+            return n;
+        }
+        else {
+            Node n= new Node(categoryNames.get(1),null,null);
+            n.setProbability(catTwo/(catOne+catTwo));
+            return n;
+        }
+    }
+
+    private String getPredictedCategory(Instance instance) {
+        Node n = root;
+        while (!(n.getLeftNode() == null & n.getRightNode() == null)) {
+            String s = n.getName();
+            int i;
+            for (i = 0; i < allInstances.size(); i++) {
+                if (attNames.get(i).equals(s))
+                    break;
+            }
+            if (instance.getAtt(i))
+                n = n.getLeftNode();
+            else if (!instance.getAtt(i))
+                n = n.getRightNode();
+        }
+        return n.getName();
+    }
+
+    private void readDataFile(String fname) {
         System.out.println("Reading data from file " + fname);
         try {
             Scanner din = new Scanner(new File(fname));
-
-            categoryNames = new ArrayList<String>();
-            for (Scanner s = new Scanner(din.nextLine()); s.hasNext(); ) categoryNames.add(s.next());
+            categoryNames = new ArrayList<>();
+            for (Scanner s = new Scanner(din.nextLine()); s.hasNext(); )
+                categoryNames.add(s.next());
             int numCategories = categoryNames.size();
             System.out.println(numCategories + " categories");
 
-            List<String> attNames = new ArrayList<String>();
-            for (Scanner s = new Scanner(din.nextLine()); s.hasNext(); ) attNames.add(s.next());
+            attNames = new ArrayList<>();
+            for (Scanner s = new Scanner(din.nextLine()); s.hasNext(); )
+                attNames.add(s.next());
             int numAtts = attNames.size();
             System.out.println(numAtts + " attributes");
 
-            return readInstances(din);
+            allInstances = readInstances(din);
+            din.close();
         } catch (IOException e) {
             throw new RuntimeException("Data File caused IO exception");
         }
     }
 
     private List<Instance> readInstances(Scanner din) {
-        /* instance = classname and space separated attribute values */
-        List<Instance> instances = new ArrayList<Instance>();
-        String ln;
+        List<Instance> instances = new ArrayList<>();
         while (din.hasNext()) {
             Scanner line = new Scanner(din.nextLine());
-            String name = line.next();
-            instances.add(new Instance(name, categoryNames.indexOf(line.next()), line));
+            instances.add(new Instance(categoryNames.indexOf(line.next()), line, this.categoryNames));
         }
         System.out.println("Read " + instances.size() + " instances");
         return instances;
     }
 
-    private Float calculatePurity(Set<Instance> instances) {
-        int difference = 0;
-        String s = instances.iterator().next().name;
-        for (Instance i : instances) {
-            if (!i.name.equals(s)) {
-                difference++;
+    private static class TestDTL {
+
+        private int numCategories;
+        private int numAtts;
+        private List<String> categoryNames;
+        private List<String> attNames;
+        private List<Instance> allInstances;
+
+        private TestDTL(String testing, String training) {
+            readDataFile(testing);
+            test(training);
+        }
+
+        private void test(String training) {
+            DecisionTree d = new DecisionTree(training);
+            double correct = 0;
+            for (Instance allInstance : allInstances) {
+                String s = d.getPredictedCategory(allInstance);
+                System.out.println("\n" + "Predicted category:" + s + ". Actual category: " + categoryNames.get(allInstance.getCategory()));
+                if (s.equals(categoryNames.get(allInstance.getCategory()))) {
+                    correct++;
+                }
+
+            }
+            System.out.println("\n" + "Success rate: " + 100 * (correct / allInstances.size()));
+        }
+
+        private void readDataFile(String fname) {
+            System.out.println("Reading data from file " + fname);
+            try {
+                Scanner din = new Scanner(new File(fname));
+                categoryNames = new ArrayList<>();
+                for (Scanner s = new Scanner(din.nextLine()); s.hasNext(); )
+                    categoryNames.add(s.next());
+                numCategories = categoryNames.size();
+                System.out.println(numCategories + " categories");
+
+                attNames = new ArrayList<>();
+                for (Scanner s = new Scanner(din.nextLine()); s.hasNext(); )
+                    attNames.add(s.next());
+                numAtts = attNames.size();
+                System.out.println(numAtts + " attributes");
+
+                allInstances = readInstances(din);
+                din.close();
+            } catch (IOException e) {
+                throw new RuntimeException("Data File caused IO exception");
             }
         }
 
-        return (float) 1 - (difference / instances.size());
-    }
-
-    private void printTree(Node root) {
-        while (root.True != null || root.False != null) {
-            if (root.True != null) {
-                root.True.report(" | ");
-                if (root.True != null) {
-                    printTree(root.True);
-                }
-                if (root.False != null) {
-                    printTree(root.False);
-                }
+        private List<Instance> readInstances(Scanner din) {
+            List<Instance> instances = new ArrayList<>();
+            while (din.hasNext()) {
+                Scanner line = new Scanner(din.nextLine());
+                instances.add(new Instance(categoryNames.indexOf(line.next()), line, categoryNames));
             }
-            if (root.False != null) {
-                root.False.report(" | ");
-                if (root.False != null) {
-                    printTree(root.False);
-                }
-                if (root.True != null) {
-                    printTree(root.True);
-                }
-            }
+            System.out.println("Read " + instances.size() + " instances");
+            return instances;
         }
+
+
     }
 
-    private String classify(Node root, Instance test) {
-        while (!root.isLeaf()) {
-            int i;
-            for (i = 0; i < categoryNames.size(); i++) {
-                if (categoryNames.get(i).equals(root.attName)) {
-                    break;
-                }
-            }
+    public static class Instance {
+        int category;
+        List<Boolean> vals;
+        private List<String> categoryNames;
 
-            if (test.getAtt(i)) {
-                root = root.True;
-            } else if (!test.getAtt(i)) {
-                root = root.getFalse();
-            }
-        }
-
-        return root.getAttName();
-    }
-
-
-    private class Node {
-        private Node True;
-        private Node False;
-
-        private int att;
-        private String attName = categoryNames.get(att);
-
-
-        Node(int att, Node t, Node f) {
-            this.True = t;
-            this.False = f;
-            this.att = att;
-        }
-
-        Node(Float prob) {
-        }
-
-        public Node getTrue() {
-            return True;
-        }
-
-        public Node getFalse() {
-            return False;
-        }
-
-        public boolean isLeaf() {
-            return false;
-        }
-
-
-        String getAttName() {
-            return attName;
-        }
-
-        public void report(String indent) {
-            System.out.format("%s%s = True:\n",
-                    indent, attName);
-            False.report(indent + "    ");
-            System.out.format("%s%s = False:\n",
-                    indent, attName);
-            True.report(indent + "    ");
-        }
-    }
-
-    private class Leaf extends Node {
-        private String className;
-        private int count;
-        private Float prob;
-
-        Leaf(Float prob) {
-            super(prob);
-            this.prob = prob;
-        }
-
-        public boolean isLeaf() {
-            return true;
-        }
-
-        public void report(String indent) {
-            if (count == 0)
-                System.out.format("%sUnknown\n", indent);
-            else
-                System.out.format("%sClass %s, prob=$4.2f\n",
-                        indent, className, prob);
-        }
-    }
-
-    private class Instance {
-
-        private String name;
-        private int category;
-        private List<Boolean> vals;
-
-        Instance(String n, int cat, Scanner s) {
-            name = n;
+        Instance(int cat, Scanner s, List<String> catNames) {
+            this.categoryNames = catNames;
             category = cat;
-            vals = new ArrayList<Boolean>();
-            while (s.hasNextBoolean()) vals.add(s.nextBoolean());
+            vals = new ArrayList<>();
+            while (s.hasNextBoolean())
+                vals.add(s.nextBoolean());
         }
+
 
         boolean getAtt(int index) {
             return vals.get(index);
@@ -327,6 +354,46 @@ public class DecisionTree {
             for (Boolean val : vals)
                 ans.append(val ? "true  " : "false ");
             return ans.toString();
+        }
+    }
+
+    private class Node implements Comparable<Node>{
+
+        private String name;
+        private Node left;
+        private Node right;
+        private double probability;
+
+
+        Node(String bestAtt, Node l, Node r) {
+            this.left=l;
+            this.right=r;
+            this.name=bestAtt;
+        }
+
+        Node getLeftNode() {return left;}
+
+        Node getRightNode() {return right;}
+
+
+        String getName() {
+            return name;
+        }
+
+        double getProbability() {
+
+            // TODO Auto-generated method stub
+            return probability;
+        }
+
+        void setProbability(double d) {
+            this.probability=d;
+        }
+
+        @Override
+        public int compareTo(Node o) {
+            // TODO Auto-generated method stub
+            return 0;
         }
 
     }
